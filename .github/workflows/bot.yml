@@ -1,0 +1,58 @@
+name: YouTube Telegram Bot
+
+on:
+  # Run automatically every 5 minutes
+  schedule:
+    - cron: "*/5 * * * *"
+
+  # Also allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    # Give the workflow permission to push the updated posted.json back
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Check out the repo (including posted.json)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 3. Cache pip dependencies for faster runs
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 5. Run the bot
+      - name: Run bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python main.py
+
+      # 6. Commit updated posted.json so we don't re-send videos
+      #    Only commits if posted.json actually changed
+      - name: Save updated posted.json
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update posted.json [skip ci]"
+          file_pattern: posted.json
+          commit_user_name: "ytbot"
+          commit_user_email: "ytbot@users.noreply.github.com"
