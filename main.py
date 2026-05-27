@@ -94,7 +94,7 @@ def fetch_latest_video(channel_id: str) -> Optional[dict]:
     """
     url = YT_RSS_URL.format(channel_id=channel_id)
     try:
-        feed = feedparser.parse(url)
+        feed = feedparser.parse(url, agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         if not feed.entries:
             log.warning(f"No entries in RSS feed for channel: {channel_id}")
             return None
